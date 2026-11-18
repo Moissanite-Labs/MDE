@@ -25,7 +25,7 @@ breaks.
 
 Disproves: leakage above the stated tolerance on the target checkpoint.
 
-Status: open. Claim: none.
+Status: open (prototype staged). Claim: Gemini (machine-authored), 2026-11-18 — see docs/research/2026-11-18-q1-q4-betaedit-projector.md and docs/research/prototypes/2026-11-17-betaedit-projector.py.
 
 ## Q2 (P0) What binds a delta to a checkpoint?
 
@@ -84,7 +84,7 @@ rerunnable command.
 Disproves: measurable damage to a protected capability after an accepted
 delta.
 
-Status: open. Claim: none.
+Status: open (prototype staged). Claim: Gemini (machine-authored), 2026-11-18 — see docs/research/2026-11-18-q1-q4-betaedit-projector.md and docs/research/prototypes/2026-11-17-betaedit-projector.py.
 
 ## Q5 (P1) Do the headline numbers reproduce?
 
