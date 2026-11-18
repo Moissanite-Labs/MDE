@@ -1,91 +1,75 @@
-# ethos
+# MDE
 
-Ethos is an evolution of context. MEP, the Model Ethos Protocol, is how an
-owner's ethos is served to whatever they work in: their principles, their
-practice, and the record of how those change over time.
+MDE is a research repo for Model Domain Expansion. It asks whether a model
+can work in its own weights instead of only through text tokens. The line it
+follows is W-MCP: a weight-space version of the Model Context Protocol, where
+layers, residual directions and low-rank adapters become typed endpoints
+instead of tokens in a prompt.
 
-MCP serves context to the model. MEP serves the person to the harness.
+This repo holds captures, evidence and open questions for that line. It is for
+research models and the people who run them. It does not ship a weight-space
+protocol and it does not change MEP v0.1.
 
-This repository is the public framework: the protocol, the reference server,
-the forkable template, and the preference record spec. Anyone can clone it,
-run their own ethos, and improve the protocol in the open.
+## Where this came from
 
-## What an ethos is
+MDE began as a copy of [ethos](https://github.com/Moissanite-Labs/ethos) at
+commit `afdb3a4`. The ethos repo captured the first W-MCP notes on 2026-11-14
+and then left the weight-space track out of its roadmap. MDE carries that
+track forward. The research files are kept verbatim, with processed analysis
+next to every raw transcript.
 
-Your agents already read files about you. Most of the time those files are
-stale, scattered and impossible to check. An ethos is the same content made
-honest:
+## Start here
 
-- **Authored.** You (or your team) write it. No model prose, no generated
-  values. Every entry is dated and attributed.
-- **Versioned.** Preferences are immutable revision records in a causal
-  graph. Corrections supersede, history is never rewritten, and rejections are
-  recorded, not erased.
-- **Checkable.** Every document is SHA-256 pinned end to end. Exports carry
-  a manifest. A file that fails its hash is unverified, never assumed good.
-- **Bounded.** Adaptation happens inside limits you can see and undo:
-  a proposal never applies until you approve it, contested preferences apply
-  nothing, and the learning switch persists.
+- [START-HERE.md](START-HERE.md): the entry point for a research model.
+- [docs/ORIENTATION.md](docs/ORIENTATION.md): mission, settled facts, hard vetoes, working rules.
+- [docs/research/INDEX.md](docs/research/INDEX.md): every captured file and its standing.
+- [docs/OPEN-QUESTIONS.md](docs/OPEN-QUESTIONS.md): numbered questions ready to pick up.
 
-## Three parts, three parents
+## What is settled and what is not
 
-| Part | From | What it contributes |
-| --- | --- | --- |
-| The corpus layout (`principles/`, `sops/`, `teams/`, `skills/`, `CHANGELOG.md`) | the Aska Digital corpus | The content model: dated, attributed, owned documents with change control |
-| The serving framework (`mep/`) | [ahrazzle/soko](https://github.com/ahrazzle/soko) | Stdlib-only Python MCP server, path confinement, SHA-256 integrity, honest failure behavior |
-| The adaptation philosophy | [weft-eido](https://github.com/Moissanite-Labs/weft-eido) | Bounded change. Respond to how the person actually works, inside limits they can see, check and undo. Condensation, not regeneration |
-| The preference records | this repository, `v0.1/` | The v0.1 revision schema and fixtures |
+Settled within the captured evidence:
 
-## Use the template
+- AlphaEdit's null-space projection works for declarative knowledge edits. It is a published result with a defined scope.
+- The compositor prototype's corrected invariant holds at about 3.7e-15 on a toy model. Its own printed check measures the wrong product and reports 6.93.
+- The SC-WSP brief overstates its claims. Its headline product is written with the wrong orientation. It is preserved, not adopted.
+- A portable weight wire that works across model families does not exist. The gauge problem is open.
+- No shipped inference runtime projects adapters at load time. Without that, a weight-space certificate proves nothing about what the host will do.
 
-Click "Use this template" on GitHub, or copy `template/` out of this
-repository. Follow `template/README.md`. Your ethos is private by default;
-publishing it is your explicit act.
+Open: how to bind a delta to a checkpoint family, how to verify an untrusted
+delta before it reaches a GPU, how to keep concurrent adapters from
+overwriting each other, and whether the reported benchmark gains reproduce.
 
-```bash
-git clone <your-ethos>
-claude mcp add mep -- python3 -m mep --root /path/to/your-ethos serve
+## Repo layout
+
+```
+START-HERE.md       entry point for research models
+AGENTS.md           rules a coding or research harness reads on arrival
+docs/ORIENTATION.md mission, evidence bar, working rules
+docs/OPEN-QUESTIONS.md   numbered research tasks
+docs/research/       captures, processed notes, prototypes
+docs/proposal/       the ethos convergence proposal
+MEP.md, v0.1/, mep/, template/, tests/    the ethos serving substrate
 ```
 
-Or query it without any harness:
+The substrate stays because MDE is still an MEP server. It serves this
+research corpus the same way an ethos serves a person. The weight-space
+designs in `docs/` are research notes, not MEP behavior.
 
-```bash
-python3 -m mep --root /path/to/your-ethos status
-python3 -m mep --root /path/to/your-ethos context "reviewing a contract" --budget 4000
+## Verify this repo
+
 ```
-
-## Install
-
-```bash
-pip install .
-# or run from a checkout: python3 -m mep --help
-```
-
-Requires Python 3.10 or newer. No third-party packages.
-
-## Verify this repository
-
-```bash
 python3 -m unittest discover -s tests -v
 python3 v0.1/test_fixtures.py
 python3 -m mep.integrity --root . --verify
 ```
 
-## Repository layout
-
-```
-MEP.md          the protocol
-v0.1/           the preference revision spec, schema, fixtures
-mep/            the reference server (python3 -m mep)
-template/       the forkable ethos skeleton
-tests/          the test suite
-CHANGELOG.md    dated record of every change and its reason
-```
+The substrate needs no third-party Python packages. The prototype scripts
+need numpy and are not part of the test suite.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Plain language, dated entries,
-no personal data, no invented rules.
+evidence over claims, no personal data.
 
 ## License
 

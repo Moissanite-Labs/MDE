@@ -12,5 +12,11 @@ Design lineage and credit:
   (https://github.com/Moissanite-Labs/weft-eido), Apache-2.0.
 - Content model and governance: the Aska Digital corpus (private repository,
   credit retained here per its attribution rules).
-- Preference revision specification: Ethos v0.1, this repository,
-  contributions by the ethos contributors.
+- Preference revision specification: Ethos v0.1, contributions by the ethos
+  contributors.
+
+MDE is derived from the ethos repository
+(https://github.com/Moissanite-Labs/ethos, commit afdb3a4). The research
+captures under `docs/research/` and `docs/proposal/` are preserved verbatim
+from ethos. The raw session files are third-party output preserved as shared,
+with attribution in their own banners.
