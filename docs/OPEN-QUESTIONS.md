@@ -25,6 +25,8 @@ breaks.
 
 Disproves: leakage above the stated tolerance on the target checkpoint.
 
+Corpus cross-reference (2026-11-18): the spliceware anchor-gate analysis and toy prototype are at `docs/research/2026-11-18-anchor-gated-load-verification.md`. Supporting analysis only; the question stays open.
+
 Status: open. Claim: none.
 
 ## Q2 (P0) What binds a delta to a checkpoint?
@@ -46,6 +48,8 @@ correct rejection.
 Disproves: a delta that applies cleanly to a checkpoint whose digest does not
 match the one it was built for.
 
+Corpus cross-reference (2026-11-18): `docs/research/2026-11-18-merkle-cell-delta-binding.md` (digest envelope, lineage ledger). Supporting analysis only; the question stays open.
+
 Status: open. Claim: none.
 
 ## Q3 (P0) Can a cheap gate catch a malicious delta?
@@ -66,6 +70,8 @@ outcome.
 Disproves: a packet that passes every certificate and silently disables a
 protected behavior.
 
+Corpus cross-reference (2026-11-18): `docs/research/2026-11-18-anchor-gated-load-verification.md` (Q3 focus, canary gate and null-space check play out on a toy). Supporting analysis only; the question stays open.
+
 Status: open. Claim: none.
 
 ## Q4 (P1) How do concurrent adapters avoid overwriting each other?
@@ -83,6 +89,8 @@ rerunnable command.
 
 Disproves: measurable damage to a protected capability after an accepted
 delta.
+
+Corpus cross-reference (2026-11-18): `docs/research/2026-11-18-homologous-splice-and-adaptive-priors.md` (seam admission, A/B shadow evaluation). Supporting analysis only; the question stays open.
 
 Status: open. Claim: none.
 
@@ -115,6 +123,8 @@ Check it against the existing bundle format before writing code.
 
 Closes when: a design note says what fits the current format, what needs a new
 one, and where the work belongs.
+
+Corpus cross-reference (2026-11-18): `docs/research/2026-11-18-merkle-cell-delta-binding.md` (Plane 1 ledger mapping, placement question for ethos vs MDE). Supporting analysis only; the question stays open.
 
 Status: open. Claim: none.
 

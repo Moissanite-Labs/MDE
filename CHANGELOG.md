@@ -2,6 +2,23 @@
 
 Dated record of every change to this repository and its reason. Newest first.
 
+## 2026-11-18: Spliceware corpus cross-reference (Q1-Q4, Q6)
+
+Added four research files distilled from the spliceware discovery session
+(`Moissanite-Labs/spliceware`, `7a1a27f` and `sacred-splicer` tip
+`97b8feb`): the verbatim raw capture
+`docs/research/2026-11-18-spliceware-sacred-splicer-raw.md`, two processed
+notes on anchor-gated load verification (Q3) and content-addressed delta
+binding (Q2, Q6), one note on homologous composition and adaptive priors
+(Q4), and a toy numpy prototype
+`docs/research/prototypes/2026-11-18-lexicase-anchor-gate.py`. Reason: Q1,
+Q2, Q3, Q4 and Q6 were all open, and the spliceware corpus is primary-source
+material on exactly these questions. Every note keeps the 6-section template,
+labels claims `verified` / `source claim` / `proposed`, and states
+falsification criteria. No MEP v0.1 code, `mep/`, `v0.1/`, `template/` or
+`MEP.md` was touched. All questions remain open; no question closed.
+
+
 ## 2026-11-17: Turn the template into a W-MCP research repo
 
 Added `START-HERE.md`, `AGENTS.md`, `docs/ORIENTATION.md`,
