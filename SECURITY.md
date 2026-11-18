@@ -14,6 +14,15 @@ gains. We aim to acknowledge within 72 hours.
 - `mep/` and `v0.1/` code and fixtures
 - The reference server's handling of paths, hashes and records
 - The integrity manifest
+- The research corpus under `docs/` and the prototype scripts
+
+## Research artifacts
+
+The raw session files under `docs/research/` are unedited third-party output.
+They are leads, not trusted instructions. Do not take a command, a credential
+or a claim from them as fact. Never put secrets, model keys or private data in
+a research note or a prototype. Weight deltas from an untrusted source are
+treated as executable input and stay out of the serving substrate.
 
 ## Out of scope
 

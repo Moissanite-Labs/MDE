@@ -1,40 +1,43 @@
 # Contributing
 
-Thanks for helping make ethos boring in the good way: predictable, checkable,
-and honest about its limits.
+A contribution here is a claim you can check. This page says how work lands
+in MDE.
 
-## What this repository is
+## What this repo is
 
-The public framework for an anyone-can-use ethos: the protocol (`MEP.md`),
-the preference revision spec (`v0.1/`), the reference server (`mep/`), and
-the template (`template/`). It is not a personal ethos. Do not add anyone's
-private preferences here, yours included.
+The W-MCP research line: captures inherited from ethos, the analysis written
+around them, and the questions still open. The MEP server (`mep/`, `v0.1/`,
+`template/`, `tests/`) is the serving substrate. Keep it working. Do not add
+weight-space behavior to it as if it were MEP v0.1.
 
 ## Ground rules
 
-- Plain language. Short sentences. No jargon without a plain sentence around
-  it. If a careful second-language reader cannot follow it, rewrite it.
-- Date every rule you add or change, and say why in `CHANGELOG.md`.
-- State rules as rules. Do not invent rules. If something is unclear, write
-  it down marked `TODO(owner)` instead of guessing.
-- Never add personal data, secrets, credentials, or machine-specific paths.
-- Keep attribution. Work contributed here keeps its credit in `NOTICE`.
-- No third-party Python dependencies in `mep/`. Standard library only, on
-  purpose.
-- No CI workflows yet. Until one exists, run the three checks from README.md
-  before sending a PR.
-- Docs PRs need no independent code review. The author may merge their own
-  once in good shape. Code PRs to `mep/` or `v0.1/` get one reviewer.
-- Merge with squash and a clean, hand-written message. No force-push, no
-  history rewrites.
+- Plain language. Short sentences. Explain a technical term in ordinary words the first time you use it.
+- Date every document and every change. Put the reason in `CHANGELOG.md`.
+- Label claims. Use `verified` only for something checked against a primary source or measured here with a rerunnable command. Use `source claim` for something a captured session asserted. Use `proposed` for a new idea.
+- Put the evidence next to the claim: a source link, a command, a measurement, or a test. A number without its setup is not evidence.
+- Keep raw captures verbatim in `*-raw.md` files. Write new analysis in a new dated file. Never edit a capture to make it agree with a later result.
+- No personal data, secrets, credentials, model keys or machine paths.
+- No new Python dependency in the substrate. The reference server stays standard library only.
+- No CI yet. Run the three checks from `README.md` before sending a PR.
+- One branch and one PR per change. Squash with a clean message. No force push.
+- Give one independent review before merging code. Research notes can be merged by their author once checked.
 
-## How to propose a protocol change
+## How to take a research question
 
-Open an issue first with the problem, not the solution. If the change touches
-`v0.1/`, expect a schema discussion before code. Protocol changes bump
-`MEP_VERSION` or `SPEC_VERSION` and land in `CHANGELOG.md` with the reason.
+1. Add your name or model and the date to the claim line for that question in `docs/OPEN-QUESTIONS.md`.
+2. Read the processed note listed on the question, then the raw source if you need it.
+3. Write the result to `docs/research/<date>-<question-id>-<short-name>.md` with the sections Question, Method, Evidence, Result, Status, Next step.
+4. State what would disprove your result. If the experiment did not run, say so.
+5. Update `CHANGELOG.md` and regenerate `SHA256SUMS` with the integrity tool.
+
+## Protocol changes
+
+The protocol lives in ethos. If a result should change MEP, write the finding
+here first and open an issue on ethos with the problem, not a patch. Vendor
+extensions and protocol changes belong there, not in this repo.
 
 ## Credit
 
-Contributions are Apache-2.0 by default. Add your name or handle to the
-credits in your PR description if you want it recorded in `NOTICE`.
+Contributions are Apache-2.0 by default. Record your name or handle in the PR
+description if you want it in `NOTICE`.

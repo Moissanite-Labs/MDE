@@ -2,6 +2,17 @@
 
 Dated record of every change to this repository and its reason. Newest first.
 
+## 2026-11-17: Turn the template into a W-MCP research repo
+
+Added `START-HERE.md`, `AGENTS.md`, `docs/ORIENTATION.md`,
+`docs/research/INDEX.md` and `docs/OPEN-QUESTIONS.md`. Rewrote `README.md`
+and `CONTRIBUTING.md` for the research direction. Reason: the repo was a
+verbatim copy of ethos at `afdb3a4`, so all captures were present but nothing
+told a new research model what was settled, what was unverified, or what to
+work on. The orientation states the evidence bar, the hard vetoes and six
+numbered questions. No research claims were changed and no substrate code was
+touched. Credit for the inherited material stays in `NOTICE`.
+
 ## 2026-11-14: Capture the taste compositor prototype
 
 Added `docs/research/prototypes/2026-11-14-taste-compositor.py` and
