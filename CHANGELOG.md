@@ -2,6 +2,10 @@
 
 Dated record of every change to this repository and its reason. Newest first.
 
+## 2026-11-18: Stage BetaEdit null-space projector prototype for Q1 and Q4
+
+Added `docs/research/prototypes/2026-11-17-betaedit-projector.py` and `docs/research/2026-11-18-q1-q4-betaedit-projector.md`, and updated `docs/OPEN-QUESTIONS.md` and `docs/research/INDEX.md` to mark Q1 and Q4 as `open (prototype staged)`. Reference-only PyTorch prototype (`BetaEditNullspaceProjector`, SPD Cholesky reduction, SGMV slab arena, and post-BF16 fixed-radix certificate); `mep/`, `v0.1/`, and `SHA256SUMS` left untouched.
+
 ## 2026-11-17: Turn the template into a W-MCP research repo
 
 Added `START-HERE.md`, `AGENTS.md`, `docs/ORIENTATION.md`,
