@@ -31,6 +31,16 @@ repo.
 | [2026-11-14-marketplace-provenance.md](2026-11-14-marketplace-provenance.md) | processed notes | Watermarking and lineage are real. The zero-knowledge framing is mislabeled. A deterministic check suffices. |
 | [2026-11-14-marketplace-provenance-raw.md](2026-11-14-marketplace-provenance-raw.md) | raw transcript | Verbatim source for the notes above. |
 
+## Cellular Substrates & Anchor-Gated Verification (from `spliceware`)
+
+| File | Kind | Standing |
+| --- | --- | --- |
+| [2026-11-18-anchor-gated-load-verification.md](2026-11-18-anchor-gated-load-verification.md) | processed notes (Q3, informs Q1) | Anchor-gate mechanism analyzed on a toy. Norm gate waves a targeted rank-4 attack through; canary and null-space checks catch it. Real-checkpoint answer still open. |
+| [2026-11-18-merkle-cell-delta-binding.md](2026-11-18-merkle-cell-delta-binding.md) | processed notes (Q2, Q6) | `RAM == WIRE == HASH` envelope answers transport binding. Semantic binding and ledger placement still open. |
+| [2026-11-18-homologous-splice-and-adaptive-priors.md](2026-11-18-homologous-splice-and-adaptive-priors.md) | processed notes (Q4) | Seam-admission and A/B shadow evaluation are candidate composition rules. Nothing measured on real checkpoints yet. |
+| [2026-11-18-spliceware-sacred-splicer-raw.md](2026-11-18-spliceware-sacred-splicer-raw.md) | raw transcript | Turns 7-9 and 13-22 verbatim plus the post-session proposals. Unedited. Contains unverified numbers on purpose. |
+| [prototypes/2026-11-18-lexicase-anchor-gate.py](prototypes/2026-11-18-lexicase-anchor-gate.py) | prototype | Toy numpy demonstration of the anchor gate. Run it from the repo root. No real checkpoint. |
+
 ## Prototypes
 
 | File | Standing |
