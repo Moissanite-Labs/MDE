@@ -1,0 +1,657 @@
+name: tmp_splice
+on:
+  push:
+    branches:
+      - splice/q2-dawe-gpatch
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          git clone https://github.com/bandr-ai/dawe /tmp/dawe
+          git -C /tmp/dawe checkout 2a8fc20a222effd6d19d20b024f3a178447ddc1e
+          python3 - <<'PYEOF'
+          import ast, hashlib, json, shutil, subprocess, textwrap
+          from pathlib import Path
+
+          DAWE_SHA = "2a8fc20a222effd6d19d20b024f3a178447ddc1e"
+          raw_patch = Path("/tmp/dawe/dawe/patch.py").read_text(encoding="utf-8")
+          tree = ast.parse(raw_patch)
+          drop_lines = set()
+          for node in tree.body:
+              drop = False
+              if isinstance(node, ast.ImportFrom) and any(a.name == "telemetry" for a in node.names):
+                  drop = True
+              elif isinstance(node, ast.Import) and any(a.name == "argparse" for a in node.names):
+                  drop = True
+              elif isinstance(node, ast.FunctionDef) and node.name in {"_log", "_lineage", "format_description", "main"}:
+                  drop = True
+              elif isinstance(node, ast.If) and "__main__" in ast.unparse(node.test):
+                  drop = True
+              if drop:
+                  for ln in range(node.lineno, (node.end_lineno or node.lineno) + 1):
+                      drop_lines.add(ln)
+          kept = [line for idx, line in enumerate(raw_patch.splitlines(keepends=True), 1) if idx not in drop_lines]
+          slice_text = "".join(kept).rstrip() + "\n"
+
+          gdir = Path("vendor/splices/dawe_gpatch")
+          gdir.mkdir(parents=True, exist_ok=True)
+          (gdir / "slice.py").write_text(slice_text, encoding="utf-8")
+
+          (gdir / "__init__.py").write_text(
+              '"""Spliced `geodesic-patch/1` capability (`bandr-ai/dawe` -> `Moissanite-Labs/MDE`)."""\n\n'
+              "from __future__ import annotations\n\n"
+              "from . import seam, slice\n\n"
+              '__all__ = ["seam", "slice"]\n',
+              encoding="utf-8",
+          )
+
+          splice_json = {
+              "splice_version": "0.1.0",
+              "capability": "dawe_geodesic_patch",
+              "donor": {
+                  "uri": "https://github.com/bandr-ai/dawe",
+                  "commit": DAWE_SHA,
+                  "license": "Apache-2.0",
+                  "entry_symbols": [
+                      "identify", "create_from_edits", "create_from_dirs", "load_patch",
+                      "check_checkpoint", "verify_checkpoint", "apply_patch", "restore_patch",
+                      "describe", "read_header", "write_safetensors", "sha256_file",
+                  ],
+              },
+              "severance_map": {
+                  "dawe.telemetry": "stdlib://none",
+                  "argparse": "host://mep.server",
+                  "pathlib.Path": "host://mep.integrity.confined_path",
+                  "manifest.source.lineage": "host://mep.ethos.Ethos",
+              },
+              "seam": {
+                  "path": "vendor/splices/dawe_gpatch/seam.py",
+                  "exports": ["WMCP_TOOLS", "build_ethos_lineage", "dispatch_wmcp_tool", "handle_wmcp_jsonrpc"],
+              },
+              "verification": {
+                  "command": "python3 -m unittest discover -s tests -v",
+                  "max_host_files_touched": 0,
+              },
+          }
+          (gdir / "splice.json").write_text(json.dumps(splice_json, indent=2) + "\n", encoding="utf-8")
+
+          seam_code = '''"""Host Seam: single adapter bridging `Moissanite-Labs/MDE` (`mep`) into `dawe_gpatch.slice`."""
+
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          from typing import Any, Dict, Optional, Sequence, Union
+
+          from mep import SPEC_VERSION
+          from mep.ethos import Ethos, load_ethos
+          from mep.integrity import confined_path
+          from mep.server import TOOLS as MEP_TOOLS
+          from mep.server import handle_jsonrpc_message as handle_mep_jsonrpc
+
+          from . import slice as gpatch
+
+          EthosInput = Union[Ethos, Path, str]
+
+
+          def _tool(name: str, desc: str, props: Dict[str, Any], req: Sequence[str]) -> Dict[str, Any]:
+              return {
+                  "name": name,
+                  "description": desc,
+                  "inputSchema": {"type": "object", "properties": props, "required": list(req)},
+              }
+
+
+          _STR = {"type": "string"}
+          _BOOL = {"type": "boolean"}
+          _LINK = {"type": "string", "enum": ["copy", "hardlink", "symlink"]}
+
+          WMCP_TOOLS = [
+              _tool(
+                  "wmcp_checkpoint_identify",
+                  "Compute checkpoint layout digest, tensor fingerprint, and side-file hashes.",
+                  {"checkpoint_dir": _STR},
+                  ("checkpoint_dir",),
+              ),
+              _tool(
+                  "wmcp_patch_create",
+                  "Create a checkpoint-bound .gpatch sparse weight delta stamped with MEP Ethos and derivation lineage.",
+                  {
+                      "source_dir": _STR,
+                      "out_patch": _STR,
+                      "name": _STR,
+                      "description": _STR,
+                      "edited_dir": _STR,
+                      "edits": {"type": "object"},
+                      "derivation": {"type": "object"},
+                      "max_changed_fraction": {"type": "number"},
+                  },
+                  ("source_dir", "out_patch", "name"),
+              ),
+              _tool(
+                  "wmcp_patch_inspect",
+                  "Inspect a confined .gpatch manifest, Ethos lineage, and touched tensor rows.",
+                  {"patch_path": _STR},
+                  ("patch_path",),
+              ),
+              _tool(
+                  "wmcp_patch_verify",
+                  "Verify a confined checkpoint against a .gpatch source or result fingerprint.",
+                  {
+                      "patch_path": _STR,
+                      "checkpoint_dir": _STR,
+                      "expect": {"type": "string", "enum": ["source", "result"]},
+                      "full": _BOOL,
+                      "require_derivation": _BOOL,
+                  },
+                  ("patch_path", "checkpoint_dir"),
+              ),
+              _tool(
+                  "wmcp_patch_apply",
+                  "Apply a verified .gpatch from source_dir into a new confined out_dir.",
+                  {"patch_path": _STR, "source_dir": _STR, "out_dir": _STR, "full": _BOOL, "link": _LINK},
+                  ("patch_path", "source_dir", "out_dir"),
+              ),
+              _tool(
+                  "wmcp_patch_restore",
+                  "Restore a patched checkpoint byte-for-byte back to its source fingerprint.",
+                  {"patch_path": _STR, "patched_dir": _STR, "out_dir": _STR, "full": _BOOL, "link": _LINK},
+                  ("patch_path", "patched_dir", "out_dir"),
+              ),
+          ]
+          _WMCP_TOOL_NAMES = frozenset(t["name"] for t in WMCP_TOOLS)
+
+
+          def _coerce_ethos(ethos_or_root: Optional[EthosInput]) -> Ethos:
+              if isinstance(ethos_or_root, Ethos):
+                  return ethos_or_root
+              return load_ethos(Path.cwd() if ethos_or_root is None else Path(ethos_or_root))
+
+
+          def _require_confined(root: Path, relative: str) -> Path:
+              target, err = confined_path(root, relative)
+              if err is not None or target is None:
+                  raise ValueError(err or "escapes_root")
+              return target
+
+
+          def build_ethos_lineage(
+              ethos: Ethos,
+              derivation: Optional[Dict[str, Any]] = None,
+          ) -> Dict[str, Any]:
+              lineage: Dict[str, Any] = {
+                  "mep_spec_version": SPEC_VERSION,
+                  "ethos_name": ethos.name,
+                  "ethos_documents": {doc.path: doc.sha256 for doc in ethos.documents},
+              }
+              if derivation is not None:
+                  lineage["derivation"] = derivation
+              return lineage
+
+
+          def dispatch_wmcp_tool(
+              name: str,
+              args: Dict[str, Any],
+              ethos_or_root: Optional[EthosInput] = None,
+          ) -> Dict[str, Any]:
+              ethos = _coerce_ethos(ethos_or_root)
+              root = ethos.root
+
+              if name == "wmcp_checkpoint_identify":
+                  ck_dir = _require_confined(root, str(args.get("checkpoint_dir", "")))
+                  ident = gpatch.identify(ck_dir)
+                  return {
+                      "checkpoint_dir": ck_dir.relative_to(root).as_posix(),
+                      "fingerprint": ident.fingerprint,
+                      "layout_sha256": ident.layout_sha256,
+                      "n_tensors": ident.n_tensors,
+                      "config": ident.config,
+                      "tokenizer": ident.tokenizer,
+                      "hashes": ident.hashes,
+                  }
+
+              if name == "wmcp_patch_create":
+                  src_dir = _require_confined(root, str(args.get("source_dir", "")))
+                  out_patch = _require_confined(root, str(args.get("out_patch", "")))
+                  patch_name = str(args.get("name", "")).strip()
+                  if not patch_name:
+                      raise ValueError("missing_patch_name")
+                  deriv = args.get("derivation")
+                  if deriv is not None and not isinstance(deriv, dict):
+                      raise ValueError("invalid_derivation_metadata")
+
+                  kw = {
+                      "name": patch_name,
+                      "description": str(args.get("description", "")),
+                      "lineage": build_ethos_lineage(ethos, derivation=deriv),
+                      "max_changed_fraction": float(args.get("max_changed_fraction", 0.25)),
+                  }
+                  edited_rel, raw_edits = args.get("edited_dir"), args.get("edits")
+                  if (edited_rel is None) == (raw_edits is None):
+                      raise ValueError("provide_exactly_one_of_edited_dir_or_edits")
+
+                  if edited_rel is not None:
+                      patch = gpatch.create_from_dirs(
+                          src_dir, _require_confined(root, str(edited_rel)), out_patch, **kw
+                      )
+                  else:
+                      if not isinstance(raw_edits, dict) or not raw_edits:
+                          raise ValueError("invalid_edits_map")
+                      parsed = {
+                          str(t): ([int(i) for i in s["indices"]], bytes.fromhex(str(s["new_hex"])))
+                          for t, s in raw_edits.items()
+                      }
+                      patch = gpatch.create_from_edits(src_dir, parsed, out_patch, **kw)
+
+                  summary = gpatch.describe(patch)
+                  summary["patch_path"] = out_patch.relative_to(root).as_posix()
+                  return summary
+
+              if name == "wmcp_patch_inspect":
+                  return gpatch.describe(
+                      gpatch.load_patch(_require_confined(root, str(args.get("patch_path", ""))))
+                  )
+
+              if name == "wmcp_patch_verify":
+                  patch_path = _require_confined(root, str(args.get("patch_path", "")))
+                  ck_dir = _require_confined(root, str(args.get("checkpoint_dir", "")))
+                  expect = str(args.get("expect", "source"))
+                  full = bool(args.get("full", True))
+                  patch = gpatch.load_patch(patch_path)
+                  problems, _ = gpatch.check_checkpoint(patch, ck_dir, expect, full=full)
+                  if bool(args.get("require_derivation", False)):
+                      lineage = patch.manifest.get("source", {}).get("lineage", {})
+                      if not isinstance(lineage, dict) or not lineage.get("derivation"):
+                          problems.append("opaque delta: missing source.lineage.derivation recipe")
+                  return {
+                      "ok": not problems,
+                      "expect": expect,
+                      "checked": "full" if full else "fast",
+                      "problems": problems,
+                  }
+
+              if name in ("wmcp_patch_apply", "wmcp_patch_restore"):
+                  patch_path = _require_confined(root, str(args.get("patch_path", "")))
+                  in_key = "source_dir" if name == "wmcp_patch_apply" else "patched_dir"
+                  in_dir = _require_confined(root, str(args.get(in_key, "")))
+                  out_dir = _require_confined(root, str(args.get("out_dir", "")))
+                  fn = gpatch.apply_patch if name == "wmcp_patch_apply" else gpatch.restore_patch
+                  res = fn(
+                      patch_path,
+                      in_dir,
+                      out_dir,
+                      full=bool(args.get("full", True)),
+                      link=str(args.get("link", "copy")),
+                  )
+                  res["out"] = out_dir.relative_to(root).as_posix()
+                  return res
+
+              raise KeyError(f"unknown wmcp tool: {name}")
+
+
+          def _error_code_for(exc: BaseException) -> str:
+              if isinstance(exc, gpatch.IncompatibleCheckpoint):
+                  return "incompatible_checkpoint"
+              if isinstance(exc, gpatch.PatchError):
+                  return "patch_error"
+              if isinstance(exc, (ValueError, KeyError)):
+                  return "invalid_or_unconfined_argument"
+              return "internal_error"
+
+
+          def handle_wmcp_jsonrpc(
+              msg: Dict[str, Any],
+              ethos_or_root: Optional[EthosInput] = None,
+          ) -> Optional[Dict[str, Any]]:
+              msg_id = msg.get("id")
+              if msg_id is None:
+                  return None
+
+              method = msg.get("method", "")
+              params = msg.get("params") or {}
+              root = (
+                  ethos_or_root.root
+                  if isinstance(ethos_or_root, Ethos)
+                  else (Path.cwd() if ethos_or_root is None else Path(ethos_or_root))
+              )
+
+              if method == "tools/list":
+                  return {
+                      "jsonrpc": "2.0",
+                      "id": msg_id,
+                      "result": {"tools": list(MEP_TOOLS) + list(WMCP_TOOLS)},
+                  }
+
+              if method == "tools/call" and params.get("name", "") in _WMCP_TOOL_NAMES:
+                  tool_name = params["name"]
+                  try:
+                      payload = dispatch_wmcp_tool(
+                          tool_name, params.get("arguments") or {}, ethos_or_root=ethos_or_root
+                      )
+                      return {
+                          "jsonrpc": "2.0",
+                          "id": msg_id,
+                          "result": {
+                              "content": [{"type": "text", "text": json.dumps(payload, indent=2)}],
+                              "structuredContent": payload,
+                              "isError": False,
+                          },
+                      }
+                  except Exception as exc:  # noqa: BLE001
+                      err = {"error": str(exc), "error_code": _error_code_for(exc), "tool": tool_name}
+                      return {
+                          "jsonrpc": "2.0",
+                          "id": msg_id,
+                          "result": {
+                              "content": [{"type": "text", "text": json.dumps(err)}],
+                              "structuredContent": err,
+                              "isError": True,
+                          },
+                      }
+
+              return handle_mep_jsonrpc(msg, root=root)
+          '''
+          (gdir / "seam.py").write_text(textwrap.dedent(seam_code), encoding="utf-8")
+
+          test_code = '''"""Lock contract test suite for `vendor.splices.dawe_gpatch` using native `MDE` inputs."""
+
+          from __future__ import annotations
+
+          import json
+          import shutil
+          import struct
+          import tempfile
+          import unittest
+          from pathlib import Path
+
+          from mep.ethos import Ethos, load_ethos
+          from vendor.splices.dawe_gpatch.seam import handle_wmcp_jsonrpc
+          from vendor.splices.dawe_gpatch.slice import sha256_file, write_safetensors
+
+
+          def _pack_bf16(values: list[int]) -> bytes:
+              return struct.pack(f"<{len(values)}H", *values)
+
+
+          def _make_mde_workspace(root: Path) -> Ethos:
+              (root / "principles").mkdir(parents=True, exist_ok=True)
+              (root / "README.md").write_text("# Model Domain Expansion\\n", encoding="utf-8")
+              (root / "principles" / "ethos.md").write_text(
+                  "# No Opaque Deltas\\nEvery weight artifact binds to its checkpoint and derivation.\\n",
+                  encoding="utf-8",
+              )
+              (root / "ethos.json").write_text(
+                  json.dumps({"name": "mde-q2-harness", "learning": "active"}),
+                  encoding="utf-8",
+              )
+              ckpt = root / "checkpoints" / "qwen_toy_v1"
+              ckpt.mkdir(parents=True, exist_ok=True)
+              write_safetensors(
+                  ckpt / "model-00001-of-00002.safetensors",
+                  {"model.embed_tokens.weight": ("BF16", [4, 4], _pack_bf16([0x3C00 + i for i in range(16)]))},
+              )
+              write_safetensors(
+                  ckpt / "model-00002-of-00002.safetensors",
+                  {"model.norm.weight": ("F32", [2, 2], struct.pack("<4f", 1.0, 0.0, 0.0, 1.0))},
+              )
+              (ckpt / "config.json").write_text('{"architectures":["Qwen3ForCausalLM"]}\\n', encoding="utf-8")
+              (ckpt / "tokenizer.json").write_text('{"version":"1.0"}\\n', encoding="utf-8")
+              (ckpt / "chat_template.jinja").write_text("{{ messages[0]['content'] }}\\n", encoding="utf-8")
+              return load_ethos(root)
+
+
+          class DaweGpatchLockTests(unittest.TestCase):
+              def setUp(self) -> None:
+                  self._tmp = tempfile.TemporaryDirectory()
+                  self.root = Path(self._tmp.name)
+                  self.ethos = _make_mde_workspace(self.root)
+
+              def tearDown(self) -> None:
+                  self._tmp.cleanup()
+
+              def _rpc(self, msg_id: int | None, method: str, params: dict | None = None) -> dict | None:
+                  msg: dict = {"jsonrpc": "2.0", "method": method}
+                  if msg_id is not None:
+                      msg["id"] = msg_id
+                  if params is not None:
+                      msg["params"] = params
+                  return handle_wmcp_jsonrpc(msg, ethos_or_root=self.ethos)
+
+              def test_mep_v01_delegation_and_tool_listing(self) -> None:
+                  resp = self._rpc(1, "tools/list")
+                  assert resp is not None
+                  names = {t["name"] for t in resp["result"]["tools"]}
+                  self.assertIn("ethos_capabilities", names)
+                  self.assertIn("wmcp_patch_create", names)
+
+                  cap = self._rpc(2, "tools/call", {"name": "ethos_capabilities", "arguments": {}})
+                  assert cap is not None
+                  self.assertEqual(cap["result"]["structuredContent"]["mep_version"], "0.1")
+
+              def test_roundtrip_apply_restore_and_derivation_gate(self) -> None:
+                  s1 = self.root / "checkpoints" / "qwen_toy_v1" / "model-00001-of-00002.safetensors"
+                  orig_bytes = s1.read_bytes()
+
+                  create = self._rpc(
+                      10,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_create",
+                          "arguments": {
+                              "source_dir": "checkpoints/qwen_toy_v1",
+                              "out_patch": "patches/eos12.gpatch",
+                              "name": "eos12",
+                              "derivation": {"compiler": "ridge_readout_v1", "lambda_ridge": 10.0},
+                              "edits": {
+                                  "model.embed_tokens.weight": {
+                                      "indices": [8, 9, 10, 11],
+                                      "new_hex": _pack_bf16([0xC000, 0xC100, 0xC200, 0xC300]).hex(),
+                                  }
+                              },
+                          },
+                      },
+                  )
+                  assert create is not None
+                  self.assertFalse(create["result"]["isError"])
+                  meta = create["result"]["structuredContent"]
+                  self.assertEqual(meta["changed_weights"], 4)
+                  self.assertEqual(meta["lineage"]["ethos_name"], "mde-q2-harness")
+                  self.assertEqual(meta["lineage"]["derivation"]["compiler"], "ridge_readout_v1")
+
+                  ver = self._rpc(
+                      11,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_verify",
+                          "arguments": {
+                              "patch_path": "patches/eos12.gpatch",
+                              "checkpoint_dir": "checkpoints/qwen_toy_v1",
+                              "expect": "source",
+                              "require_derivation": True,
+                          },
+                      },
+                  )
+                  assert ver is not None
+                  self.assertTrue(ver["result"]["structuredContent"]["ok"])
+
+                  app = self._rpc(
+                      12,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_apply",
+                          "arguments": {
+                              "patch_path": "patches/eos12.gpatch",
+                              "source_dir": "checkpoints/qwen_toy_v1",
+                              "out_dir": "checkpoints/patched",
+                          },
+                      },
+                  )
+                  assert app is not None and not app["result"]["isError"]
+                  patched_s1 = self.root / "checkpoints" / "patched" / "model-00001-of-00002.safetensors"
+                  self.assertNotEqual(sha256_file(patched_s1), sha256_file(s1))
+
+                  rest = self._rpc(
+                      13,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_restore",
+                          "arguments": {
+                              "patch_path": "patches/eos12.gpatch",
+                              "patched_dir": "checkpoints/patched",
+                              "out_dir": "checkpoints/restored",
+                          },
+                      },
+                  )
+                  assert rest is not None and not rest["result"]["isError"]
+                  restored_s1 = self.root / "checkpoints" / "restored" / "model-00001-of-00002.safetensors"
+                  self.assertEqual(restored_s1.read_bytes(), orig_bytes)
+
+              def test_template_drift_and_opaque_delta_rejection(self) -> None:
+                  edt = self.root / "checkpoints" / "edited"
+                  shutil.copytree(self.root / "checkpoints" / "qwen_toy_v1", edt)
+                  vals = [0x3C00 + i for i in range(16)]
+                  vals[0] = 0xBEEF
+                  write_safetensors(
+                      edt / "model-00001-of-00002.safetensors",
+                      {"model.embed_tokens.weight": ("BF16", [4, 4], _pack_bf16(vals))},
+                  )
+                  self._rpc(
+                      20,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_create",
+                          "arguments": {
+                              "source_dir": "checkpoints/qwen_toy_v1",
+                              "edited_dir": "checkpoints/edited",
+                              "out_patch": "patches/opaque.gpatch",
+                              "name": "opaque",
+                          },
+                      },
+                  )
+                  ver_opaque = self._rpc(
+                      21,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_verify",
+                          "arguments": {
+                              "patch_path": "patches/opaque.gpatch",
+                              "checkpoint_dir": "checkpoints/qwen_toy_v1",
+                              "require_derivation": True,
+                          },
+                      },
+                  )
+                  assert ver_opaque is not None
+                  self.assertFalse(ver_opaque["result"]["structuredContent"]["ok"])
+
+                  (self.root / "checkpoints" / "qwen_toy_v1" / "chat_template.jinja").write_text("DRIFT\\n", encoding="utf-8")
+                  app_drift = self._rpc(
+                      22,
+                      "tools/call",
+                      {
+                          "name": "wmcp_patch_apply",
+                          "arguments": {
+                              "patch_path": "patches/opaque.gpatch",
+                              "source_dir": "checkpoints/qwen_toy_v1",
+                              "out_dir": "checkpoints/fail",
+                          },
+                      },
+                  )
+                  assert app_drift is not None
+                  self.assertTrue(app_drift["result"]["isError"])
+                  self.assertEqual(app_drift["result"]["structuredContent"]["error_code"], "incompatible_checkpoint")
+
+              def test_confinement_rejects_escape_paths(self) -> None:
+                  esc = self._rpc(
+                      30,
+                      "tools/call",
+                      {"name": "wmcp_checkpoint_identify", "arguments": {"checkpoint_dir": "../escape"}},
+                  )
+                  assert esc is not None
+                  self.assertTrue(esc["result"]["isError"])
+                  self.assertEqual(esc["result"]["structuredContent"]["error"], "absolute_empty_or_parent_path")
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          '''
+          Path("tests/test_splice_dawe_gpatch.py").write_text(textwrap.dedent(test_code), encoding="utf-8")
+
+          oq_path = Path("docs/OPEN-QUESTIONS.md")
+          oq = oq_path.read_text(encoding="utf-8")
+          q2_idx = oq.find("Q2")
+          assert q2_idx != -1
+          old_status = "Status: open. Claim: none."
+          new_status = "Status: in review. Claim: Gemini (machine-authored), 2026-11-17 — see docs/research/2026-11-17-q2-dawe-gpatch-splice.md."
+          s_idx = oq.find(old_status, q2_idx)
+          assert s_idx != -1
+          oq_path.write_text(oq[:s_idx] + new_status + oq[s_idx + len(old_status):], encoding="utf-8")
+
+          idx_path = Path("docs/research/INDEX.md")
+          idx_txt = idx_path.read_text(encoding="utf-8")
+          wmcp_pos = idx_txt.find("## W-MCP core")
+          assert wmcp_pos != -1
+          sep_pos = idx_txt.find("| ---", wmcp_pos)
+          line_end = idx_txt.find("\n", sep_pos) + 1
+          new_row = "| [2026-11-17-q2-dawe-gpatch-splice.md](2026-11-17-q2-dawe-gpatch-splice.md) | splice & research note (in review) | Q2 checkpoint-bound sparse deltas via geodesic-patch/1 (dawe_gpatch splice). |\n"
+          idx_path.write_text(idx_txt[:line_end] + new_row + idx_txt[line_end:], encoding="utf-8")
+
+          cl_path = Path("CHANGELOG.md")
+          cl = cl_path.read_text(encoding="utf-8")
+          entry = (
+              "## 2026-11-17: Q2 checkpoint-binding splice (dawe_gpatch)\n\n"
+              "- Added `vendor/splices/dawe_gpatch/` (`__init__.py`, `splice.json`, `slice.py`, `seam.py`) "
+              "splicing `bandr-ai/dawe` `geodesic-patch/1` under Splicer Protocol v0.1.0 with zero changes to `mep/` or `v0.1/`.\n"
+              "- Added contract test suite `tests/test_splice_dawe_gpatch.py` and Q2 research note `docs/research/2026-11-17-q2-dawe-gpatch-splice.md`.\n"
+              "- Updated `docs/OPEN-QUESTIONS.md`, `docs/research/INDEX.md`, `NOTICE`, and `SHA256SUMS`.\n\n"
+          )
+          h2 = cl.find("## ")
+          cl_path.write_text((cl[:h2] + entry + cl[h2:]) if h2 != -1 else (cl + "\n" + entry), encoding="utf-8")
+
+          nt_path = Path("NOTICE")
+          nt = nt_path.read_text(encoding="utf-8").rstrip() + "\n"
+          nt += (
+              "- Geodesic-patch/1 (.gpatch) sparse weight patch core in\n"
+              "  `vendor/splices/dawe_gpatch/slice.py`: bandr-ai/dawe\n"
+              "  (https://github.com/bandr-ai/dawe), Apache-2.0.\n"
+          )
+          nt_path.write_text(nt, encoding="utf-8")
+
+          shutil.rmtree(".github", ignore_errors=True)
+
+          sums_path = Path("SHA256SUMS")
+          entries = {}
+          for line in sums_path.read_text(encoding="utf-8").splitlines():
+              if "  " in line:
+                  digest, rel = line.split("  ", 1)
+                  entries[rel] = digest
+          touched = [
+              "CHANGELOG.md",
+              "NOTICE",
+              "docs/OPEN-QUESTIONS.md",
+              "docs/research/2026-11-17-q2-dawe-gpatch-splice.md",
+              "docs/research/INDEX.md",
+              "tests/test_splice_dawe_gpatch.py",
+              "vendor/splices/dawe_gpatch/__init__.py",
+              "vendor/splices/dawe_gpatch/seam.py",
+              "vendor/splices/dawe_gpatch/slice.py",
+              "vendor/splices/dawe_gpatch/splice.json",
+          ]
+          for rel in touched:
+              entries[rel] = hashlib.sha256(Path(rel).read_bytes()).hexdigest()
+          sums_path.write_text("".join(f"{entries[k]}  {k}\n" for k in sorted(entries)), encoding="utf-8")
+
+          subprocess.run(["python3", "-m", "unittest", "discover", "-s", "tests", "-v"], check=True)
+          subprocess.run(["python3", "-m", "mep.integrity", "--root", ".", "--verify"], check=True)
+          PYEOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "research(q2): splice dawe .gpatch checkpoint-binding core"
+          git push
