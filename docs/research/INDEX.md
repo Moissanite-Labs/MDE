@@ -21,6 +21,7 @@ repo.
 | [2026-11-14-alphaedit-and-scwsp-raw.md](2026-11-14-alphaedit-and-scwsp-raw.md) | raw transcript | Verbatim source for the notes above. |
 | [2026-11-14-scwsp-brief.md](2026-11-14-scwsp-brief.md) | audit of a brief | Not adopted. The printed invariant has the wrong orientation. The footer verification claim is false for that product. |
 | [2026-11-14-compositor-prototype.md](2026-11-14-compositor-prototype.md) | prototype analysis | Corrected invariant measures 3.7e-15 on a toy model. Reference only. |
+| [2026-11-18-q1-q4-betaedit-projector.md](2026-11-18-q1-q4-betaedit-projector.md) | Q1/Q4 prototype note | SPD Cholesky reduction and synthetic sequential leakage check verified; real-checkpoint run open |
 
 ## Marketplace and provenance
 
@@ -38,6 +39,7 @@ repo.
 | [prototypes/2026-11-14-scwsp-brief-generator.py](prototypes/2026-11-14-scwsp-brief-generator.py) | Preserved verbatim. Generates the audited brief. Needs `weasyprint` and `pypdf`. |
 | [prototypes/2026-11-14-taste-compositor.py](prototypes/2026-11-14-taste-compositor.py) | Preserved verbatim. Runs on numpy. Its final check prints the wrong product. |
 | [prototypes/2026-11-14-taste-compositor-fixcheck.py](prototypes/2026-11-14-taste-compositor-fixcheck.py) | Corrected check written during capture. Run it from the repo root. |
+| [prototypes/2026-11-17-betaedit-projector.py](prototypes/2026-11-17-betaedit-projector.py) | PyTorch reference prototype | history-aware BetaEdit null-space projector, SGMV slab arena, and post-BF16 fixed-radix certificate (not MEP code) |
 
 ## Proposal
 
