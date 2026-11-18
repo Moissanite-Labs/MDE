@@ -14,6 +14,7 @@ Design lineage and credit:
   credit retained here per its attribution rules).
 - Preference revision specification: Ethos v0.1, contributions by the ethos
   contributors.
+- Geodesic sparse weight patch format (.gpatch): bandr-ai/dawe (https://github.com/bandr-ai/dawe, commit 2a8fc20a222effd6d19d20b024f3a178447ddc1e), Apache License 2.0.
 
 MDE is derived from the ethos repository
 (https://github.com/Moissanite-Labs/ethos, commit afdb3a4). The research
