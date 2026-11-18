@@ -1,0 +1,42 @@
+{
+  "splice_version": "0.1.0",
+  "capability": "dawe_geodesic_patch",
+  "donor": {
+    "uri": "https://github.com/bandr-ai/dawe",
+    "commit": "2a8fc20a222effd6d19d20b024f3a178447ddc1e",
+    "license": "Apache-2.0",
+    "entry_symbols": [
+      "identify",
+      "create_from_edits",
+      "create_from_dirs",
+      "load_patch",
+      "check_checkpoint",
+      "verify_checkpoint",
+      "apply_patch",
+      "restore_patch",
+      "describe",
+      "read_header",
+      "write_safetensors",
+      "sha256_file"
+    ]
+  },
+  "severance_map": {
+    "dawe.telemetry": "stdlib://none",
+    "argparse": "host://mep.server",
+    "pathlib.Path": "host://mep.integrity.confined_path",
+    "manifest.source.lineage": "host://mep.ethos.Ethos"
+  },
+  "seam": {
+    "path": "vendor/splices/dawe_gpatch/seam.py",
+    "exports": [
+      "WMCP_TOOLS",
+      "build_ethos_lineage",
+      "dispatch_wmcp_tool",
+      "handle_wmcp_jsonrpc"
+    ]
+  },
+  "verification": {
+    "command": "python3 -m unittest discover -s tests -v",
+    "max_host_files_touched": 0
+  }
+}
