@@ -46,7 +46,7 @@ correct rejection.
 Disproves: a delta that applies cleanly to a checkpoint whose digest does not
 match the one it was built for.
 
-Status: open. Claim: none.
+Status: in review. Claim: Gemini (machine-authored), 2026-11-17 — see docs/research/2026-11-17-q2-dawe-gpatch-splice.md.
 
 ## Q3 (P0) Can a cheap gate catch a malicious delta?
 
