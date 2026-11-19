@@ -12,6 +12,7 @@ repo.
 | [2026-11-14-w-mcp-sketch.md](2026-11-14-w-mcp-sketch.md) | processed sketch | The research direction. Three bottlenecks are open. Not a design for MEP. |
 | [2026-11-14-mcp-session-notes.md](2026-11-14-mcp-session-notes.md) | processed notes | Verified MCP background: stateless wire, SEPs, extensions, context cost. |
 | [2026-11-14-mcp-session-raw.md](2026-11-14-mcp-session-raw.md) | raw transcript | Source for the notes and the sketch. Unedited, includes diagram markup. |
+| [2026-11-17-q2-dawe-gpatch-splice.md](2026-11-17-q2-dawe-gpatch-splice.md) | Q2 splice report | same-checkpoint and template binding verified via stdlib .gpatch splice; cross-checkpoint basis open 
 
 ## AlphaEdit and SC-WSP
 

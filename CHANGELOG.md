@@ -2,6 +2,10 @@
 
 Dated record of every change to this repository and its reason. Newest first.
 
+## 2026-11-17: Q2 checkpoint-binding splice (dawe_gpatch)
+
+Grafted the stdlib `.gpatch` checkpoint-binding splice from `bandr-ai/dawe` (`2a8fc20a222effd6d19d20b024f3a178447ddc1e`, Apache-2.0) under `vendor/splices/dawe_gpatch/` per Splicer Protocol v0.1.0, added the lock contract test suite `tests/test_splice_dawe_gpatch.py`, and recorded the Q2 research report in `docs/research/2026-11-17-q2-dawe-gpatch-splice.md` (with `docs/OPEN-QUESTIONS.md`, `docs/research/INDEX.md`, `NOTICE`, and `SHA256SUMS` updated). `mep/` and `v0.1/` remain untouched.
+
 ## 2026-11-17: Turn the template into a W-MCP research repo
 
 Added `START-HERE.md`, `AGENTS.md`, `docs/ORIENTATION.md`,
